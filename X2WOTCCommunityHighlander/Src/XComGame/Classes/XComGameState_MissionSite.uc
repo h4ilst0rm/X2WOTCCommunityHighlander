@@ -583,6 +583,8 @@ private function SelectBiomeAndPlotDefinition(MissionDefinition MissionDef, out 
 
 	ParcelMgr = `PARCELMGR;
 	ExcludeBiomes.Length = 0;
+
+	`log(GetFuncName() @ MissionDef.MissionName @ MissionDef.sType, true, 'LOGGERS');
 	
 	Biome = SelectBiome(MissionDef, ExcludeBiomes);
 	PrevBiome = Biome;
@@ -682,9 +684,28 @@ private function bool SelectPlotDefinition(MissionDefinition MissionDef, string 
 	local name SitRepName;
 	local X2SitRepTemplate SitRep;
 
+	local PlotDefinition Entry;
+	local array<string> PlotCards;
+	local array<SavedCardDeck> jemma;
+	local SavedCardDeck deck;
+	local int Index;
+
 	ParcelMgr = `PARCELMGR;
 	ParcelMgr.GetValidPlotsForMission(ValidPlots, MissionDef, Biome);
 	SitRepMgr = class'X2SitRepTemplateManager'.static.GetSitRepTemplateManager();
+	
+	class'X2CardManager'.static.GetCardManager().GetAllCardsInDeck('Plots', PlotCards);
+	class'X2CardManager'.static.GetCardManager().SaveDeckData(jemma);
+
+	Index = jemma.Find('DeckName', 'Plots');
+	`log("Plot at" @ Index, true, 'LOGGERS');
+	deck = jemma[Index];
+
+	foreach ValidPlots(Entry)
+	{
+		Index = deck.Deck.Cards.Find('CardLabel', Entry.MapName);
+		`log(GetFuncName() @ Entry.MapName @ index @ deck.Deck.ShuffleCount @ deck.Deck.Cards[Index].UseCount @ deck.Deck.Cards[Index].InitialWeight @ PlotCards.Find(Entry.MapName), true, 'LOGGERS');
+	}
 
 	// pull the first one that isn't excluded from strategy, they are already in order by weight
 	foreach ValidPlots(SelectedDef)
@@ -701,9 +722,10 @@ private function bool SelectPlotDefinition(MissionDefinition MissionDef, string 
 
 		if(!SelectedDef.ExcludeFromStrategy)
 		{
+			`log(GetFuncName() @ "Selected" @ SelectedDef.MapName @ SelectedDef.strType, true, 'LOGGERS');		
 			return true;
 		}
-	}
+	}	
 
 	ExcludeBiomes.AddItem(Biome);
 	return false;
